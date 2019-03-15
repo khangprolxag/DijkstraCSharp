@@ -22,32 +22,28 @@ namespace WindowsFormsApplication1
         double[,] weightBetween = new double[100, 100];
         int startNode = -1 , endNode = -1;
         //=========================================
-        Graphics graphics;
-        List<Node> graphNodes = new List<Node>();
+        Graphics graphics; //Thư viện vẽ của C#
+        List<Node> graphNodes = new List<Node>(); //Danh sách quản lí các nút (quản lí vị trí, hàm vẽ nút ,...)
 
-        bool stopCreateNode = false; //True if we don't want to create node anymore
-        bool settingStartNode = false;
-        bool settingEndNode = false;
-        private Color randomColor() //Random color using RGB
-        {
-            Random random = new Random();
-            return Color.FromArgb((byte)random.Next(0, 255), (byte)random.Next(0, 255), (byte)random.Next(0, 255));
-        }
-
+        bool stopCreateNode = false;  //Biến boolean kiểm tra người dùng đã nhấn "finish creating node"
+        bool settingStartNode = false;  //Biến boolean kiểm tra người dùng đã nhấn "SET START Point"
+        bool settingEndNode = false; //Biến boolean kiểm tra nút nhấn "SET END Point"
     
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            Console.WriteLine("Created graphics");
         }
 
-        private void onClickOnForm(object sender, EventArgs e)
+        private void onClickOnForm(object sender, EventArgs e) //Sự kiện được gọi sau mỗi lần click chuột lên 
+        //window form, mình dùng hàm này để tạo các nút và cài đặt nút khởi đầu và nút kết thúc
         {
             MouseEventArgs mouseEvent = (e as MouseEventArgs);
-            Point mousePosition = new Point(mouseEvent.X, mouseEvent.Y);
+            Point mousePosition = new Point(mouseEvent.X, mouseEvent.Y); //Lấy vị trí chuột
             
-            if (stopCreateNode)
+            if (stopCreateNode) //nếu người dùng chưa nhấn finish creating node
+             //thì mình tiếp tục tạo các nút mới
             {
+                //còn nếu đã nhấn rồi thì mình chỉ cho người dùng chọn nút bắt đầu và nút kết thúc
                 if (settingStartNode)
                 {
                     
@@ -71,28 +67,30 @@ namespace WindowsFormsApplication1
                 }
                 return;
             } 
-            else
+            else //Tạo nút mới
             {
-                Node newNode = new Node(mousePosition, Color.Blue);
-                graphNodes.Add(newNode);
+                Node newNode = new Node(mousePosition, Color.Blue); //Tạo nút mới tại vị trí chuột
+                graphNodes.Add(newNode); //thêm nút mới vào danh sách
 
-                graphics.Clear(Color.White);
-                drawNodes(false);
+                drawNodes(false); //xóa màn hình các nút và vẽ lại các nút đó, false nghĩa là không vẽ
+                //các đường liên kết các nút
             }
 
 
             
         }
 
-        void outputLog(string text)
+        void outputLog(string text) //hàm in ra console
         {
             debugLog.AppendText("\r\n" + text);
             debugLog.ScrollToCaret();
         }
 
 
-        List<Node> selectedNode = new List<Node>();
-        private void onDoubleClickOnForm(object sender, EventArgs e)
+        List<Node> selectedNode = new List<Node>(); //quản lí 2 nút đã nhấn bằng cách double click 
+        private void onDoubleClickOnForm(object sender, EventArgs e)// hàm này được gọi
+            //khi người dùng nhấn 2 lần "double click" lên form
+            //mình xử dụng hàm này để cho người dùng chọn 2 nút, và code sẽ kết nối 2 nút đó
         {
             if (!stopCreateNode || graphNodes.Count == 0) //If user hasn't been finished creating nodes, we won't allow to select special node
             {
@@ -100,33 +98,38 @@ namespace WindowsFormsApplication1
             }
             MouseEventArgs mouseEvent = e as MouseEventArgs;
             Node closestNode = Node.closestNodeTo(ref graphNodes,new Point(mouseEvent.X, mouseEvent.Y));
+            //Tìm nút gần nhất đối với vị trí chuột sau khi double click
 
             //Console.WriteLine(closestNode.ID);
 
             
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias; 
+            //SmoothingMode nghĩa là hàm vẽ sẽ vẽ đẹp hơn là không gọi smoothingMode
             closestNode.Select(graphics);
 
-            if (selectedNode.Count < 1)
+            if (selectedNode.Count < 1) //nếu chưa chọn nút nào
             {
-                selectedNode.Add(closestNode);
-            }else
+                selectedNode.Add(closestNode); //thêm nút vừa chọn vào
+            }else //khi đã chọn 2 nút
             {
-                selectedNode.Add(closestNode);
+                selectedNode.Add(closestNode); //thêm nút còn lại vào danh sách đã chọn
                 
-                Node.connectNodes(graphics, ref weightBetween, selectedNode[0], selectedNode[1]);
-                outputLog("Đã kết nối hai nút: " + selectedNode[0].ID + " " + selectedNode[1].ID);
-                graphics.Clear(Color.White);
-                drawNodes(true);
+                Node.connectNodes(graphics, ref weightBetween, selectedNode[0], selectedNode[1]); //kết nối
+                //2 nút đã chọn
 
-                Console.WriteLine(weightBetween[selectedNode[0].ID, selectedNode[1].ID]);
-                selectedNode.Clear();
+                outputLog("Đã kết nối hai nút: " + selectedNode[0].ID + " " + selectedNode[1].ID);
+
+                drawNodes(true); //Xóa và vẽ lại các đường liên kết + các nút
+
+                selectedNode.Clear(); //xóa danh sách đã chọn
+                showSimulatedDataTable(); //hiển thị table trọng điểm
 
             }
         }
 
 
-        private void drawNodes(bool drawLine)
+        private void drawNodes(bool drawLine) //Hàm vẽ nút + đường, nhận 1 boolean drawLine
+           // khi true - thì hàm này sẽ vẽ các đường liên kết, false thì không
         {
 
             graphics.Clear(Color.White);
@@ -157,21 +160,23 @@ namespace WindowsFormsApplication1
             
         }
 
-        private void dataView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        private void dataView_CellValueChanged(object sender, DataGridViewCellEventArgs e)//Hàm sự kiện
+            //được gọi khi giá trị trong bảng có thay đổi
         {
-            Console.WriteLine((sender as DataGridView).CurrentCell.Value.GetType());
-            double editedValue = Convert.ToDouble((sender as DataGridView).CurrentCell.Value);
+            double editedValue = Convert.ToDouble((sender as DataGridView).CurrentCell.Value);//cast giá trị
+            //từ bảng thành double 
 
-            weightBetween[e.ColumnIndex - 1, e.RowIndex] = editedValue;
-            weightBetween[e.RowIndex, e.ColumnIndex - 1] = editedValue;
+            weightBetween[e.ColumnIndex - 1, e.RowIndex] = editedValue; //Thay đổi giá trị trong ma trận trọng điểm
+            weightBetween[e.RowIndex, e.ColumnIndex - 1] = editedValue; //Thay đổi giá trị trong ma trận trọng điểm
 
-            
-            drawNodes(true);
+
+            drawNodes(true); //xóa và vẽ lại các liên kết (sau khi update trọng điểm)
 
             outputLog("Đã chỉnh sửa thành công");
+            showSimulatedDataTable(); //xóa table và hiển thị lại table
         }
 
-        void showSimulatedDataTable()
+        void showSimulatedDataTable() //hiển thị table
         {
 
     
@@ -204,7 +209,7 @@ namespace WindowsFormsApplication1
             
         }
 
-        private void finishCreatingNodes_Click(object sender, EventArgs e)
+        private void finishCreatingNodes_Click(object sender, EventArgs e) 
         {
             stopCreateNode = true;
             
@@ -221,7 +226,7 @@ namespace WindowsFormsApplication1
         }
 
 
-        private void startDijkstra(object sender, EventArgs e)
+        private void startDijkstra(object sender, EventArgs e) //Khởi động thuật toán dijkstra
         {
             
             
@@ -285,11 +290,12 @@ namespace WindowsFormsApplication1
             outputLog("TỔng trọng số đã đi qua là " + weightNode[endNode]);
 
             printPath(startNode, endNode, traceNode);
-            graphNodes[startNode].HighLight(graphics, Color.Yellow);
-            graphNodes[endNode].HighLight(graphics, Color.Red);
+
+            graphNodes[startNode].HighLight(graphics, Color.Yellow); //In màu vàng cho nút bắt đầu
+            graphNodes[endNode].HighLight(graphics, Color.Red); //In màu đỏ cho nút kết thúc
         }
 
-        private void printPath(int start, int finish, int[] path)
+        private void printPath(int start, int finish, int[] path) //In ra đường đi ngắn nhất
         {
             int currentNode = finish;
             string tracePath = "";
